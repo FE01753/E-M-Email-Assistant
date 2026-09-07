@@ -1,125 +1,147 @@
 import streamlit as st
+from docx import Document
+from docx.shared import Inches, Pt, RGBColor
+import io
 from datetime import datetime
+from PIL import Image
 
-st.set_page_config(page_title="AI 雙語工程電郵助手", page_icon="✉️", layout="centered")
+st.title("📸 Sleek-Industrial 進度記錄器")
 
-st.title("✉️ AI 雙語工程電郵助手 (E&M Assistant)")
-st.write("針對工程界設計：支援中英雙語對照、自選長短、Formal/Casual 語氣切換！")
-
-st.divider()
-
-# --- 1. 設定電郵選項 ---
-st.subheader("📌 1. 電郵參數設定")
-
-col1, col2 = st.columns(2)
-with col1:
-    recipient_type = st.selectbox(
-        "收件人對象", 
-        ["對客戶 (Client / 商業夥伴)", "對業主 / 則師 (Landlord / Consultant)", "對內部工程團隊 / 判頭"]
-    )
-    tone_style = st.selectbox(
-        "語氣風格 (Tone)", 
-        ["Formal (正式、專業、合規)", "Casual (輕鬆、直接、有效率)"]
-    )
-with col2:
-    email_category = st.selectbox(
-        "電郵種類 (Template Type)", 
-        [
-            "回覆報價邀請 / Quotation Invitation Response",
-            "報價跟進 / Quotation Follow-up",
-            "技術澄清 / Technical Clarification",
-            "工程延誤解釋與方案 / Delay Explanation & Solution",
-            "文件/圖則審批回覆 / Proposal Submission Reply",
-            "夾位/現場協調通知 / Site Coordination Notice"
-        ]
-    )
-    length_style = st.selectbox(
-        "電郵長度 (Length)", 
-        ["Brief (精簡扼要 - 適合快速回覆)", "Detailed (詳細完整 - 標準商務)"]
-    )
+# --- 0. 設定 Job Title (工程項目名稱) ---
+st.subheader("📌 項目基本資料")
+job_title = st.text_input("Job Title / 工程項目名稱", value="", placeholder="例如: Regent Hotel F3 改善工程")
 
 st.divider()
 
-# --- 2. 輸入對方內容或核心要點 ---
-st.subheader("📝 2. 輸入對方來信或重點")
-other_party_content = st.text_area(
-    "貼上對方的 Email 內容 (選填)：", 
-    placeholder="例如：收到裝修單位發黎嘅 Quotation Invitation，要求就 Regent Hotel 3/F 進行 EL 系統改動報價..."
-)
+# 1. 初始化 Session State 黎暫存記錄
+if 'records' not in st.session_state:
+    st.session_state['records'] = []
 
-extra_notes = st.text_input("你想強調嘅核心訊息 (例如：預計三日內交到 / 需先夾位)", placeholder="例如：將於本週五前提交正式 Quotation")
+# --- 輸入當前記錄 ---
+st.subheader("1️⃣ 新增現場記錄")
 
-st.divider()
+floor = st.text_input("樓層 (Floor) [選填]", placeholder="例如: B2 / G/F / 3/F (可留空)")
+room = st.text_input("房間 / 區域 (Room / Area) [選填]", placeholder="例如: Function Room A / 掣房 (可留空)")
+category = st.selectbox("工程類別", ["AC", "FS", "P&D", "EL", "OTHER"])
+remarks = st.text_area("工作備忘", placeholder="請輸入工作內容或備忘...")
 
-# --- 3. 生成雙語電郵按鈕 ---
-if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
-    
-    # 根據選項動態生成英文版與中文對照版
-    is_formal = "Formal" in tone_style
-    is_brief = "Brief" in length_style
-    
-    # 英文內容初始化
-    eng_greeting = "Dear [Name/Team],"
-    if "業主" in recipient_type:
-        eng_greeting = "Dear [Landlord Representative / Architect],"
-    elif "客戶" in recipient_type:
-        eng_greeting = "Dear [Client Representative],"
-    elif "內部" in recipient_type:
-        eng_greeting = "Hi [Colleague/Subcontractor Name],"
+# 拍照或上傳相片
+photo = st.file_uploader("拍攝或上傳現場相片", type=['jpg', 'jpeg', 'png', 'heic'])
 
-    eng_body = ""
-    chi_body = "" # 中文參考
-    
-    # --- 類別 1：回覆報價邀請 (Quotation Invitation Response) ---
-    if "回覆報價邀請" in email_category:
-        if is_formal:
-            eng_body = f"""Thank you for your kind invitation to submit a quotation.\n\nWe acknowledge receipt of your request regarding the project requirements. Our team is currently reviewing the site details and scope of works (including FFL verification and relevant safety standards).\n\n{extra_notes if extra_notes else 'We will finalize and submit our formal quotation shortly.'}\n\nShould you require any preliminary site visit or coordination in the meantime, please feel free to let us know."""
-            chi_body = f"""感謝閣下邀請我們提交報價。\n\n我們已收到關於項目要求的查詢。團隊正審視現場細節及工程範圍（包括 FFL 驗證及相關安全標準）。\n\n{extra_notes if extra_notes else '我們將盡快完成並提交正式報價單。'}\n\n如在此期間需要任何初步現場視察或協調，請隨時通知我們。"""
-        else:
-            eng_body = f"""Hi [Name],\n\nThanks for inviting us to quote! We've received your request and are looking into the details.\n\n{extra_notes if extra_notes else 'We will get the formal quotation over to you soon.'}\n\nLet us know if you need anything else before then."""
-            chi_body = f"""Hi [名字],\n\n多謝邀請報價！我們已經收到要求並正查看細節。\n\n{extra_notes if extra_notes else '我們好快會將正式報價交畀你。'}\n\n如果有其他需要請隨時出聲。"""
-
-    # --- 類別 2：報價跟進 ---
-    elif "報價跟進" in email_category:
-        if is_formal:
-            eng_body = f"""We are writing to follow up on the quotation previously submitted for your review.\n\nOur team has carefully evaluated the site conditions and engineering requirements. {extra_notes if extra_notes else 'Should you have any queries or require adjustments to the proposal, we remain at your disposal.'}\n\nWe look forward to your favorable response."""
-            chi_body = f"""特此跟進早前提交以供審閱之報價單。\n\n我們已仔細評估現場條件及工程要求。{extra_notes if extra_notes else '如閣下有任何疑問或需調整方案，我們隨時樂意配合。'}\n\n期待閣下的佳音。"""
-        else:
-            eng_body = f"""Hi [Name],\n\nJust following up on the quotation we sent earlier. {extra_notes if extra_notes else 'Let us know if you have any questions or want to discuss the details.'}\n\nCheers,"""
-            chi_body = f"""Hi [名字],\n\n簡單跟進一下之前發嘅報價單。{extra_notes if extra_notes else '如果有任何問題或想傾傾細節歡迎話我知。'}\n\n謝謝，"""
-
-    # --- 類別 3：技術澄清 ---
-    elif "技術澄清" in email_category:
-        eng_body = f"""Thank you for your inquiry. Regarding the technical specifications and site configuration, please find our clarification below:\n\n1. Site Verification: {extra_notes if extra_notes else 'Our engineering team has verified that the installation complies with relevant E&M standards.'}\n2. Compliance: All works will be executed strictly in accordance with safety guidelines and statutory requirements.\n\nShould you need a coordination meeting, please advise your availability."""
-        chi_body = f"""感謝查詢。關於技術規格及現場配置，現作以下澄清：\n\n1. 現場核實：{extra_notes if extra_notes else '工程團隊已核實安裝符合相關機電標準。'}\n2. 合規性：所有工程將嚴格按照安全指引及法定要求執行。\n\n如需安排夾位會議，請話我知你嘅時間。"""
-
-    # --- 類別 4：工程延誤解釋 ---
-    elif "工程延誤" in email_category:
-        eng_body = f"""Thank you for your attention to the project progress. We would like to provide an update regarding the recent schedule adjustment:\n\n• Cause: {other_party_content[:100] if other_party_content else 'Unforeseen site conditions and coordination adjustments.'}\n• Mitigation & Solution: {extra_notes if extra_notes else 'We have deployed extra resources to catch up on the timeline safely.'}\n\nWe appreciate your understanding and cooperation."""
-        chi_body = f"""感謝關注工程進度。現就近期的進度調整作以下匯報：\n\n• 原因：{other_party_content[:100] if other_party_content else '不可預見的現場條件及協調調整。'}\n• 應對與解決方案：{extra_notes if extra_notes else '我們已增派人手以安全方式追回進度。'}\n\n感謝閣下的理解與配合。"""
-
-    # --- 類別 5：文件/圖則審批 ---
-    elif "文件/圖則審批" in email_category:
-        eng_body = f"""Please find attached our latest proposal/drawing for your review and approval.\n\nKey updates include adjustments based on site measurements and full compliance with relevant safety and insurance policies (EC/CAR).\n\n{extra_notes}\n\nWe look forward to your approval to proceed with the next phase."""
-        chi_body = f"""隨信附上最新提案/圖則供閣下審批。\n\n主要更新包括根據現場尺寸作出調整，並完全符合相關安全及保險政策（EC/CAR）。\n\n{extra_notes}\n\n期待閣下批核以便進行下一階段工作。"""
-
-    # --- 類別 6：夾位/現場協調 ---
+# 加入暫存清單按鈕
+if st.button("➕ 新增到今日清單"):
+    if photo is not None:
+        try:
+            img = Image.open(photo)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGB')
+            
+            photo_bytes = io.BytesIO()
+            img.save(photo_bytes, format='JPEG', quality=90)
+            photo_bytes.seek(0)
+            photo_bytes.name = "photo.jpg"
+            
+            f_val = floor.strip() if floor else ""
+            r_val = room.strip() if room else ""
+            
+            st.session_state['records'].append({
+                "floor": f_val,
+                "room": r_val,
+                "category": category,
+                "remarks": remarks,
+                "photo": photo_bytes
+            })
+            st.success("成功新增現場記錄！")
+        except Exception as e:
+            st.error(f"相片處理失敗，請嘗試另一張相片。錯誤詳情: {e}")
     else:
-        eng_body = f"""To ensure smooth coordination among different trades, we would like to arrange a site coordination session.\n\n• Focus Area: {extra_notes if extra_notes else 'Main routing and service zones'}\n• Objective: To prevent clash issues prior to installation.\n\nPlease let us know your preferred date and time."""
-        chi_body = f"""為確保各工種順利協調，擬安排現場夾位工作。\n\n• 重點區域：{extra_notes if extra_notes else '主要喉管路線及服務區'}\n• 目的：在安裝前避免碰撞問題。\n\n請話我知閣下方便嘅日期同時間。"""
+        st.warning("請上傳或拍攝現場相片！")
 
-    # 簽署
-    eng_signoff = "Best regards,\n[Your Name]\nE&M Maintenance Section"
-    if is_formal and "業主" in recipient_type:
-        eng_signoff = "Yours faithfully,\n[Your Name]\nEngineering Department"
+st.divider()
 
-    final_email = f"{eng_greeting}\n\n{eng_body}\n\n{eng_signoff}"
+# --- 2. 顯示已記錄嘅清單 ---
+st.subheader("📋 今日已記錄項目")
+if len(st.session_state['records']) > 0:
+    for i, rec in enumerate(st.session_state['records']):
+        loc_parts = []
+        if rec['floor']: loc_parts.append(f"樓層: {rec['floor']}")
+        if rec['room']: loc_parts.append(f"區域: {rec['room']}")
+        loc_str = " - ".join(loc_parts) if loc_parts else "未註明位置"
+        
+        with st.expander(f"項目 #{i+1}: {loc_str} ({rec['category']})"):
+            st.write(f"備忘：{rec['remarks']}")
+            
+            # 預覽相片前先重置指標
+            rec['photo'].seek(0)
+            st.image(rec['photo'], width=300)
+            
+            if st.button(f"刪除此項 #{i+1}", key=f"del_{i}"):
+                st.session_state['records'].pop(i)
+                st.rerun()
+                
+    if st.button("🗑️ 清空所有記錄"):
+        st.session_state['records'] = []
+        st.rerun()
+else:
+    st.info("暫時未有記錄，請喺上面新增。")
 
-    # 顯示結果
-    st.success("🎉 雙語電郵範本生成成功！")
-    
-    st.subheader("📤 英文版 (可直接 Copy 寄出)")
-    st.text_area("English Output", value=final_email, height=220)
-    
-    st.subheader("🇨🇳 中文對照參考 (內部參閱)")
-    st.text_area("Chinese Reference", value=chi_body, height=180)
+st.divider()
+
+# --- 3. 最後一鍵生成 REPORT ---
+st.subheader("3️⃣ 匯出報告")
+if st.button("📥 一鍵生成 Word 報告"):
+    if len(st.session_state['records']) == 0:
+        st.warning("請先新增至少一個記錄先可以出 Report！")
+    else:
+        doc = Document()
+        
+        # --- 新增：設定頁尾水印 / 公司標誌 (Footer Watermark) ---
+        section = doc.sections[0]
+        footer = section.footer
+        footer_p = footer.paragraphs[0]
+        footer_p.text = "E&M Maintenance Section | Sleek-Industrial Official Report - Confidential"
+        footer_p.alignment = docx.enum.text.WD_ALIGN_PARAGRAPH.RIGHT
+        # 設定頁尾字體大小與顏色
+        for run in footer_p.runs:
+            run.font.size = Pt(8.5)
+            run.font.color.rgb = RGBColor(128, 128, 128)
+        
+        # --- 報告內容主體 ---
+        doc.add_heading(f"工程進度巡檢報告", 0)
+        display_title = job_title if job_title.strip() != "" else "Unnamed Project"
+        doc.add_paragraph(f"Job Title: {display_title}")
+        doc.add_paragraph(f"生成日期：{datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        doc.add_paragraph(f"總記錄項目數：{len(st.session_state['records'])} 項\n")
+        doc.add_paragraph("-" * 40)
+        
+        for i, rec in enumerate(st.session_state['records']):
+            loc_parts = []
+            if rec['floor']: loc_parts.append(f"樓層 {rec['floor']}")
+            if rec['room']: loc_parts.append(f"區域 {rec['room']}")
+            loc_title = f"項目 {i+1}: " + (" - ".join(loc_parts) if loc_parts else "未註明位置")
+            
+            doc.add_heading(loc_title, level=2)
+            doc.add_paragraph(f"• 工程類別：{rec['category']}")
+            doc.add_paragraph(f"• 工作備忘：{rec['remarks']}")
+            
+            try:
+                # 插入 Word 前將指標歸零
+                rec['photo'].seek(0)
+                doc.add_picture(rec['photo'], width=Inches(4.5))
+            except Exception as e:
+                doc.add_paragraph("[相片載入失敗]")
+            
+            doc.add_paragraph("-" * 30)
+            
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        
+        safe_job_title = "".join(c for c in display_title if c.isalnum() or c in (' ', '_', '-')).strip().replace(' ', '_')
+        
+        st.download_button(
+            label="💾 點擊下載 Word 報告 (.docx)",
+            data=buffer,
+            file_name=f"Report_{safe_job_title}_{datetime.now().strftime('%Y%m%d_%H%M')}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )

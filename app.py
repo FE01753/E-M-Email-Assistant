@@ -28,11 +28,8 @@ with col2:
             "發送正式 Quotation 畀對方 / Sending Official Quotation",
             "回覆報價邀請 / Quotation Invitation Response",
             "報價跟進 / Quotation Follow-up",
-            "技術澄清 / Technical Clarification",
-            "工程延誤解釋與方案 / Delay Explanation & Solution",
-            "文件/圖則審批回覆 / Proposal Submission Reply",
-            "夾位/現場協調通知 / Site Coordination Notice",
-            "提交/發送工程進度表 / Submitting Work Schedule"
+            "提交/發送工程進度表 / Submitting Work Schedule",
+            "其他事項 / General Inquiry / Other"
         ]
     )
     length_style = st.selectbox(
@@ -83,19 +80,26 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
             else:
                 eng_body_content = "Please find attached our proposed work schedule for your review and record."
                 chi_body_content = "隨信附上擬定之工程進度表供閣下審閱及備案。"
-        
-        elif "技術澄清" in email_category:
-            eng_body_content = f"Regarding your inquiry, please be advised as follows: {note_txt if note_txt else 'All works and specifications comply with relevant E&M standards.'}"
-            chi_body_content = f"關於您的查詢，現作以下回覆：{note_txt if note_txt else '所有工程及規格均符合相關機電標準。'}"
+                
+        elif "發送正式 Quotation" in email_category:
+            eng_body_content = f"Please find attached our official quotation for your review and consideration. {note_txt if note_txt else ''}"
+            chi_body_content = f"隨信附上正式報價單供閣下審閱及考慮。{note_txt if note_txt else ''}"
             
-        else:
-            # 預設通用專業正文
+        elif "回覆報價邀請" in email_category:
+            eng_body_content = f"Thank you for your kind invitation. {note_txt if note_txt else 'We are currently reviewing the details and will submit our proposal shortly.'}"
+            chi_body_content = f"感謝閣下的邀請。{note_txt if note_txt else '我們現正審視相關細節，並將盡快提交報價。'}"
+            
+        elif "報價跟進" in email_category:
+            eng_body_content = f"We are writing to follow up on the quotation previously submitted. {note_txt if note_txt else ''}"
+            chi_body_content = f"特此跟進早前提交之報價單。{note_txt if note_txt else ''}"
+            
+        else:  # 其他事項 / General Inquiry / Other
             if note_txt:
-                eng_body_content = f"Regarding the project requirements, please be advised that {note_txt}."
-                chi_body_content = f"關於項目要求，現補充如下：{note_txt}。"
+                eng_body_content = f"Regarding the above matter, please be advised as follows: {note_txt}."
+                chi_body_content = f"關於上述事宜，現作以下回覆：{note_txt}。"
             else:
-                eng_body_content = "Please find our latest project update attached for your review."
-                chi_body_content = "隨信附上最新的專案進度更新供閣下審閱。"
+                eng_body_content = "Please find our project updates attached for your review and record."
+                chi_body_content = "隨信附上相關專案更新供閣下審閱及備案。"
 
     # 處理稱呼邏輯
     clean_name = recipient_name.strip()

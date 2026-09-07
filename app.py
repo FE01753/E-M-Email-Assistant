@@ -56,6 +56,7 @@ other_party_content = st.text_area(
     placeholder="例如：關於 Regent Hotel 3/F 項目嘅電氣及冷氣改動工程報價..."
 )
 
+# 補返「你想強調嘅核心訊息」輸入框
 raw_extra_notes = st.text_area(
     "你想強調嘅核心訊息 (隨便打口語或粗略重點，生成時會自動轉化為專業商務語氣)：", 
     placeholder="例如：確認本週五進場，會夾埋冷氣組去馬"
@@ -168,7 +169,7 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
     final_chi_ref = f"{chi_salutation}\n\n{chi_body}"
 
     # 顯示結果
-    st.success("🎉 雙語電郵範本生成成功（雙語已完美對應轉換）！")
+    st.success("🎉 雙語電郵範本生成成功！")
     
     st.subheader("📤 英文版 (右上角有一鍵 Copy 掣，同事可直接貼上)")
     st.code(final_email, language="text")

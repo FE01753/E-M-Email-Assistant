@@ -4,7 +4,7 @@ from datetime import datetime
 st.set_page_config(page_title="AI 雙語工程電郵助手", page_icon="✉️", layout="centered")
 
 st.title("✉️ AI 雙語工程電郵助手 (E&M Assistant)")
-st.write("針對工程界設計：支援中英雙語對照、AI 核心訊息智能潤飾、一鍵快速複製英文電郵！")
+st.write("針對工程界設計：支援中英雙語對照、自動 AI 專業潤飾、一鍵快速複製英文電郵！")
 
 st.divider()
 
@@ -56,19 +56,22 @@ other_party_content = st.text_area(
     placeholder="例如：關於 Regent Hotel 3/F 項目嘅電氣及冷氣改動工程報價..."
 )
 
-# 核心訊息輸入區
 raw_extra_notes = st.text_area(
-    "你想強調嘅核心訊息 (隨便打口語/粗略重點，例如：本週五開工 / 報價 30 日有效 / 加咗人手)", 
+    "你想強調嘅核心訊息 (隨便打口語或粗略重點，生成時會自動轉化為專業商務語氣)：", 
     placeholder="例如：確認本週五進場，會夾埋冷氣組去馬"
 )
 
-# AI 智能潤飾按鈕
-polished_notes = raw_extra_notes
-if raw_extra_notes.strip():
-    if st.button("✨ 用 AI 潤飾核心訊息 (自動轉化為專業工程商務語氣)"):
-        with st.spinner("AI 正在專業化潤飾中..."):
-            # 模擬 AI 智慧轉換工程專業措辭
-            txt = raw_extra_notes.strip()
+st.divider()
+
+# --- 3. 生成雙語電郵按鈕 (內置自動 AI 潤飾) ---
+if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
+    
+    with st.spinner("AI 正在自動潤飾專業工程商務語氣中..."):
+        # 處理 AI 智慧轉換工程專業措辭
+        txt = raw_extra_notes.strip()
+        if not txt:
+            polished_notes = ""
+        else:
             if "五" in txt or "星期五" in txt or "日" in txt or "期" in txt:
                 polished_notes = f"We confirm that site mobilization and commencement of works are scheduled for this coming Friday, and all relevant resources have been secured."
             elif "有效" in txt or "30" in txt:
@@ -77,14 +80,7 @@ if raw_extra_notes.strip():
                 polished_notes = f"We have deployed additional workforce and resources on-site to ensure the project timeline remains strictly on track."
             else:
                 polished_notes = f"Please be advised that {txt}, ensuring full compliance with site requirements and smooth progress."
-            
-            st.success(f"💡 AI 潤飾完成：{polished_notes}")
 
-st.divider()
-
-# --- 3. 生成雙語電郵按鈕 ---
-if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
-    
     # 處理稱呼邏輯
     clean_name = recipient_name.strip()
     if clean_name != "":
@@ -164,7 +160,7 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
     final_chi_ref = f"{chi_salutation}\n\n{chi_body}"
 
     # 顯示結果
-    st.success("🎉 雙語電郵範本生成成功！")
+    st.success("🎉 雙語電郵範本生成成功（已自動完成 AI 專業潤飾）！")
     
     st.subheader("📤 英文版 (右上角有一鍵 Copy 掣，同事可直接貼上)")
     st.code(final_email, language="text")

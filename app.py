@@ -173,7 +173,7 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
     st.subheader("📤 英文版 (右上角有一鍵 Copy 掣，同事可直接貼上)")
     st.code(final_email, language="text")
     
-    st.subheader("🇨🇳 中文對照參考 (內部參閱)")
+    st.subheader("中文對照參考 (內部參閱)")
     st.text_area("Chinese Reference", value=final_chi_ref, height=180)
 
 # --- App 底部專屬水印 (Footer) ---

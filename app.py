@@ -53,7 +53,7 @@ recipient_name = st.text_input(
 
 other_party_content = st.text_area(
     "貼上對方的 Email 內容或項目背景 (選填)：", 
-    placeholder="例如：關於 Regent Hotel 3/F 項目嘅電氣及冷氣改動工程報價..."
+    placeholder="例如：Could you please advise the replacement schedule for the valve."
 )
 
 raw_extra_notes = st.text_area(
@@ -63,40 +63,52 @@ raw_extra_notes = st.text_area(
 
 st.divider()
 
-# --- 3. 生成雙語電郵按鈕 (內置雙語自動 AI 潤飾) ---
+# --- 3. 生成雙語電郵按鈕 (真正讀取並結合對方背景與補充) ---
 if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
     
-    with st.spinner("AI 正在自動潤飾中、英專業工程商務語氣中..."):
-        txt = raw_extra_notes.strip()
-        if not txt:
-            eng_polished = ""
-            chi_polished = ""
-        else:
-            # 針對「提交 Schedule」類別或其他口語的智能轉化
-            if "星" in txt or "星期" in txt or "周" in txt or "週" in txt or "月" in txt:
-                eng_polished = f"Please note that materials have been ordered, and site works are scheduled to commence in 4 weeks as outlined in the schedule."
-                chi_polished = f"請注意，相關物料經已訂購，並如進度表所示，工程將於 4 星期後正式開工。"
-            elif "五" in txt or "星期五" in txt or "fri" in txt.lower():
-                eng_polished = "We confirm that site mobilization and commencement of works are scheduled for this coming Friday, and all relevant resources have been secured."
-                chi_polished = "我們確認地盤動員及開工工程定於本週五進行，所有相關資源已準備就緒。"
-            elif "有效" in txt or "30" in txt:
-                eng_polished = "Please note that the quotation remains valid for 30 days from the date of issuance."
-                chi_polished = "請注意，本報價單由發出日起計 30 天內有效。"
-            elif "人" in txt or "快" in txt or "追" in txt or "resource" in txt.lower():
-                eng_polished = "We have deployed additional workforce and resources on-site to ensure the project timeline remains strictly on track."
-                chi_polished = "我們已在現場增派人手及資源，以確保項目進度嚴格按時間表進行。"
-            elif "圖" in txt or "draw" in txt.lower():
-                eng_polished = "Please refer to the updated layout and draft drawings attached, which fully comply with current site requirements and safety standards."
-                chi_polished = "請參閱隨附之更新佈局及草圖，其完全符合現行現場要求及安全標準。"
+    with st.spinner("AI 正在深度解析對方背景與您的核心訊息中..."):
+        bg_txt = other_party_content.strip()
+        note_txt = raw_extra_notes.strip()
+        is_formal = "Formal" in tone_style
+        
+        # --- 動態整合英文內容 ---
+        eng_intro_parts = []
+        if bg_txt:
+            eng_intro_parts.append(f"Regarding your inquiry ({bg_txt}),")
+        
+        if note_txt:
+            # 針對常見口語進行智能專業轉換
+            if "星" in note_txt or "星期" in note_txt or "周" in note_txt or "週" in note_txt or "月" in note_txt:
+                eng_intro_parts.append(f"please be advised that materials have been ordered, and site works are scheduled to commence in 4 weeks.")
             else:
-                eng_polished = f"Please be advised regarding the above schedule and arrangements: {txt}, ensuring full compliance with site requirements."
-                chi_polished = f"請留意上述進度及相關安排：{txt}，以確保完全符合現場要求。"
+                eng_intro_parts.append(f"please be advised as follows: {note_txt}.")
+        
+        if not eng_intro_parts:
+            eng_body_content = "Please find our project updates attached for your review and record."
+        else:
+            eng_body_content = " ".join(eng_intro_parts)
+
+        # --- 動態整合中文內容 ---
+        chi_intro_parts = []
+        if bg_txt:
+            chi_intro_parts.append(f"關於您的查詢（{bg_txt}），")
+        
+        if note_txt:
+            if "星" in note_txt or "星期" in note_txt or "周" in note_txt or "週" in note_txt or "月" in note_txt:
+                chi_intro_parts.append(f"請注意相關物料經已訂購，並將於 4 星期後正式開工。")
+            else:
+                chi_intro_parts.append(f"現作以下補充：{note_txt}。")
+        
+        if not chi_intro_parts:
+            chi_body_content = "隨信附上相關專案進度供閣下審閱及備案。"
+        else:
+            chi_body_content = "".join(chi_intro_parts)
 
     # 處理稱呼邏輯
     clean_name = recipient_name.strip()
     if clean_name != "":
         eng_salutation = f"Dear {clean_name},"
-        chi_salutation = f"尊敬的 {clean_name}：" if "Formal" in tone_style else f"Hi {clean_name},"
+        chi_salutation = f"尊敬的 {clean_name}：" if is_formal else f"Hi {clean_name},"
     else:
         eng_salutation = "Dear Sir/Madam,"
         chi_salutation = "敬啟者 / Sir/Madam："
@@ -105,70 +117,16 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
         eng_salutation = "Hi Team,"
         chi_salutation = "Hi 各位同事："
 
-    is_formal = "Formal" in tone_style
-    
-    eng_body = ""
-    chi_body = "" 
-    
-    # --- 類別 0：發送正式 Quotation ---
-    if "發送正式 Quotation" in email_category:
-        if is_formal:
-            eng_body = f"""Please find attached our official quotation for your review and consideration.\n\nOur team has carefully evaluated the site conditions, scope of works, and relevant technical requirements. {eng_polished if eng_polished else 'All proposed items comply with statutory standards and site safety guidelines.'}\n\nShould you have any questions or require further clarification regarding the pricing or details, please feel free to contact us."""
-            chi_body = f"""隨信附上正式報價單供閣下審閱及考慮。\n\n我們已仔細評估現場情況、工程範圍及相關技術要求。{chi_polished if chi_polished else '所有建議項目均符合法定標準及地盤安全指引。'}\n\n如對價格或細節有任何疑問或需進一步澄清，請隨時與我們聯絡。"""
-        else:
-            eng_body = f"""Please find our official quotation attached.\n\n{eng_polished if eng_polished else 'We have factored in all the site requirements and scope discussed.'}\n\nLet me know if you have any questions or want to go over the details."""
-            chi_body = f"""隨信附上正式報價單。\n\n{chi_polished if chi_polished else '我們已計及所有討論過嘅現場要求同工程範圍。'}\n\n如果有任何問題或想對對細節隨時話我知。"""
-
-    # --- 類別 1：回覆報價邀請 ---
-    elif "回覆報價邀請" in email_category:
-        if is_formal:
-            eng_body = f"""Thank you for your kind invitation to submit a quotation.\n\nWe acknowledge receipt of your request regarding the project requirements. Our team is currently reviewing the site details and scope of works.\n\n{eng_polished if eng_polished else 'We will finalize and submit our formal quotation shortly.'}"""
-            chi_body = f"""感謝閣下邀請我們提交報價。\n\n我們已收到關於項目要求的查詢。團隊正審視現場細節及工程範圍。\n\n{chi_polished if chi_polished else '我們將盡快完成並提交正式報價單。'}"""
-        else:
-            eng_body = f"""Thanks for inviting us to quote! We've received your request and are looking into the details.\n\n{eng_polished if eng_polished else 'We will get the formal quotation over to you soon.'}"""
-            chi_body = f"""多謝邀請報價！我們已經收到要求並正查看細節。\n\n{chi_polished if chi_polished else '我們好快會將正式報價交畀你。'}"""
-
-    # --- 類別 2：報價跟進 ---
-    elif "報價跟進" in email_category:
-        if is_formal:
-            eng_body = f"""We are writing to follow up on the quotation previously submitted for your review.\n\nOur team has carefully evaluated the site conditions and engineering requirements. {eng_polished if eng_polished else 'Should you have any queries or require adjustments, we remain at your disposal.'}"""
-            chi_body = f"""特此跟進早前提交以供審閱之報價單。\n\n我們已仔細評估現場條件及工程要求。{chi_polished if chi_polished else '如閣下有任何疑問或需調整方案，我們隨時樂意配合。'}"""
-        else:
-            eng_body = f"""Just following up on the quotation we sent earlier. {eng_polished if eng_polished else 'Let us know if you have any questions or want to discuss the details.'}"""
-            chi_body = f"""簡單跟進一下之前發嘅報價單。{chi_polished if chi_polished else '如果有任何問題或想傾傾細節歡迎話我知。'}"""
-
-    # --- 類別 3：技術澄清 ---
-    elif "技術澄清" in email_category:
-        eng_body = f"""Thank you for your inquiry. Regarding the technical specifications and site configuration, please find our clarification below:\n\n1. Site Verification: {eng_polished if eng_polished else 'Our engineering team has verified that the installation complies with relevant E&M standards.'}\n2. Compliance: All works will be executed strictly in accordance with safety guidelines and statutory requirements."""
-        chi_body = f"""感謝查詢。關於技術規格及現場配置，現作以下澄清：\n\n1. 現場核實：{chi_polished if chi_polished else '工程團隊已核實安裝符合相關機電標準。'}\n2. 合規性：所有工程將嚴格按照安全指引及法定要求執行。"""
-
-    # --- 類別 4：工程延誤解釋 ---
-    elif "工程延誤" in email_category:
-        eng_body = f"""Thank you for your attention to the project progress. We would like to provide an update regarding the schedule adjustment:\n\n• Cause: {other_party_content[:100] if other_party_content else 'Unforeseen site conditions and coordination adjustments.'}\n• Mitigation & Solution: {eng_polished if eng_polished else 'We have deployed extra resources to catch up on the timeline safely.'}"""
-        chi_body = f"""感謝關注工程進度。現就近期的進度調整作以下匯報：\n\n• 原因：{other_party_content[:100] if other_party_content else '不可預見的現場條件及協調調整。'}\n• 應對與解決方案：{chi_polished if chi_polished else '我們已增派人手以安全方式追回進度。'}"""
-
-    # --- 類別 5：文件/圖則審批 ---
-    elif "文件/圖則審批" in email_category:
-        eng_body = f"""Please find attached our latest proposal/drawing for your review and approval.\n\nKey updates include adjustments based on site measurements and full compliance with relevant safety standards.\n\n{eng_polished}"""
-        chi_body = f"""隨信附上最新提案/圖則供閣下審批。\n\n主要更新包括根據現場尺寸作出調整，並完全符合相關安全標準。\n\n{chi_polished}"""
-
-    # --- 類別 6：夾位/現場協調 ---
-    elif "夾位/現場協調" in email_category:
-        eng_body = f"""To ensure smooth coordination among different trades, we would like to arrange a site coordination session.\n\n• Focus Area: {eng_polished if eng_polished else 'Main routing and service zones'}\n• Objective: To prevent clash issues prior to installation."""
-        chi_body = f"""為確保各工種順利協調，擬安排現場夾位工作。\n\n• 重點區域：{chi_polished if chi_polished else '主要喉管路線及服務區'}\n• 目的：在安裝前避免碰撞問題。"""
-
-    # --- 類別 7：提交/發送工程進度表 (Submitting Work Schedule) ---
+    # 組裝最終電郵結構
+    if is_formal:
+        eng_final_body = f"{eng_body_content}\n\nOur team has carefully reviewed all requirements to ensure full compliance with technical and safety standards. Should you require any further details, please feel free to contact us."
+        chi_final_body = f"{chi_body_content}\n\n我們已仔細審視所有要求，以確保完全符合技術及安全標準。如需進一步詳情，請隨時與我們聯絡。"
     else:
-        if is_formal:
-            eng_body = f"""Please find attached our tentative work schedule for your review and record.\n\n{eng_polished if eng_polished else 'Our team has planned the sequence of works to ensure minimal disruption and smooth progress.'}\n\nShould you have any comments or require minor adjustments, please feel free to let us know."""
-            chi_body = f"""隨信附上擬定之工程進度表供閣下審閱及備案。\n\n{chi_polished if chi_polished else '我們已妥善規劃施工次序，以確保對周邊影響減到最低並順利推進。'}\n\n如閣下有任何意見或需微調，請隨時通知我們。"""
-        else:
-            eng_body = f"""Please find our proposed work schedule attached.\n\n{eng_polished if eng_polished else 'We have arranged the timeline accordingly.'}\n\nLet me know if you have any feedback!"""
-            chi_body = f"""隨信附上建議嘅工程進度表。\n\n{chi_polished if chi_polished else '時間表已經安排好。'}\n\n如果有任何意見隨時話我知！"""
+        eng_final_body = f"{eng_body_content}\n\nLet me know if you have any questions!"
+        chi_final_body = f"{chi_body_content}\n\n如果有任何問題隨時話我知！"
 
-    # 乾淨正文（無下款）
-    final_email = f"{eng_salutation}\n\n{eng_body}"
-    final_chi_ref = f"{chi_salutation}\n\n{chi_body}"
+    final_email = f"{eng_salutation}\n\n{eng_final_body}"
+    final_chi_ref = f"{chi_salutation}\n\n{chi_final_body}"
 
     # 顯示結果
     st.success("🎉 雙語電郵範本生成成功！")

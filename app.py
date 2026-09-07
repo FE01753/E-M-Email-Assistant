@@ -4,7 +4,7 @@ from datetime import datetime
 st.set_page_config(page_title="AI 雙語工程電郵助手", page_icon="✉️", layout="centered")
 
 st.title("✉️ AI 雙語工程電郵助手 (E&M Assistant)")
-st.write("針對工程界設計：支援中英雙語對照、一鍵快速複製英文電郵，並帶有 Nikki 專屬簽署！")
+st.write("針對工程界設計：支援中英雙語對照、一鍵快速複製（不含署名，方便同事直接使用）！")
 
 st.divider()
 
@@ -104,8 +104,8 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
             eng_body = f"""We are writing to follow up on the quotation previously submitted for your review.\n\nOur team has carefully evaluated the site conditions and engineering requirements. {extra_notes if extra_notes else 'Should you have any queries or require adjustments to the proposal, we remain at your disposal.'}\n\nWe look forward to your favorable response."""
             chi_body = f"""特此跟進早前提交以供審閱之報價單。\n\n我們已仔細評估現場條件及工程要求。{extra_notes if extra_notes else '如閣下有任何疑問或需調整方案，我們隨時樂意配合。'}\n\n期待閣下的佳音。"""
         else:
-            eng_body = f"""Just following up on the quotation we sent earlier. {extra_notes if extra_notes else 'Let us know if you have any questions or want to discuss the details.'}\n\nCheers,"""
-            chi_body = f"""簡單跟進一下之前發嘅報價單。{extra_notes if extra_notes else '如果有任何問題或想傾傾細節歡迎話我知。'}\n\n謝謝，"""
+            eng_body = f"""Just following up on the quotation we sent earlier. {extra_notes if extra_notes else 'Let us know if you have any questions or want to discuss the details.'}"""
+            chi_body = f"""簡單跟進一下之前發嘅報價單。{extra_notes if extra_notes else '如果有任何問題或想傾傾細節歡迎話我知。'}"""
 
     # --- 類別 3：技術澄清 ---
     elif "技術澄清" in email_category:
@@ -127,19 +127,14 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
         eng_body = f"""To ensure smooth coordination among different trades, we would like to arrange a site coordination session.\n\n• Focus Area: {extra_notes if extra_notes else 'Main routing and service zones'}\n• Objective: To prevent clash issues prior to installation.\n\nPlease let us know your preferred date and time."""
         chi_body = f"""為確保各工種順利協調，擬安排現場夾位工作。\n\n• 重點區域：{extra_notes if extra_notes else '主要喉管路線及服務區'}\n• 目的：在安裝前避免碰撞問題。\n\n請話我知閣下方便嘅日期同時間。"""
 
-    # Nikki 專屬簽署水印
-    eng_signoff = "Best regards,\nNikki\nE&M Maintenance Section"
-    if is_formal and "業主" in recipient_type:
-        eng_signoff = "Yours faithfully,\nNikki\nEngineering Department"
-
-    final_email = f"{eng_salutation}\n\n{eng_body}\n\n{eng_signoff}"
+    # **完全不帶下款，直接組合正文**
+    final_email = f"{eng_salutation}\n\n{eng_body}"
     final_chi_ref = f"{chi_salutation}\n\n{chi_body}"
 
     # 顯示結果
-    st.success("🎉 雙語電郵範本生成成功！")
+    st.success("🎉 雙語電郵範本生成成功（無下款版本）！")
     
-    st.subheader("📤 英文版 (右上角備有一鍵 Copy 掣)")
-    # 用 st.code 取代普通 text_area，右上方會自動出現「📋 Copy」按鈕
+    st.subheader("📤 英文版 (右上角有一鍵 Copy 掣，同事可直接貼上)")
     st.code(final_email, language="text")
     
     st.subheader("🇨🇳 中文對照參考 (內部參閱)")

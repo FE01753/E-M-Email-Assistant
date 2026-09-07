@@ -72,18 +72,22 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
             eng_polished = ""
             chi_polished = ""
         else:
-            if "五" in txt or "星期五" in txt or "日" in txt or "期" in txt:
+            # 關鍵字智能對應中英文專業版本，避免夾雜英文
+            if "五" in txt or "星期五" in txt or "fri" in txt.lower():
                 eng_polished = "We confirm that site mobilization and commencement of works are scheduled for this coming Friday, and all relevant resources have been secured."
                 chi_polished = "我們確認地盤動員及開工工程定於本週五進行，所有相關資源已準備就緒。"
             elif "有效" in txt or "30" in txt:
                 eng_polished = "Please note that the quotation remains valid for 30 days from the date of issuance."
                 chi_polished = "請注意，本報價單由發出日起計 30 天內有效。"
-            elif "人" in txt or "快" in txt or "追" in txt:
+            elif "人" in txt or "快" in txt or "追" in txt or "resource" in txt.lower():
                 eng_polished = "We have deployed additional workforce and resources on-site to ensure the project timeline remains strictly on track."
                 chi_polished = "我們已在現場增派人手及資源，以確保項目進度嚴格按時間表進行。"
+            elif "圖" in txt or "draw" in txt.lower():
+                eng_polished = "Please refer to the updated layout and draft drawings attached, which fully comply with current site requirements and safety standards."
+                chi_polished = "請參閱隨附之更新佈局及草圖，其完全符合現行現場要求及安全標準。"
             else:
-                eng_polished = f"Please be advised that {txt}, ensuring full compliance with site requirements and smooth progress."
-                chi_polished = f"請注意：{txt}，以確保完全符合現場要求及工程順利進行。"
+                eng_polished = f"Please be advised regarding the above arrangements, ensuring full compliance with site requirements and smooth progress."
+                chi_polished = f"請留意上述安排，以確保完全符合現場要求及工程順利進行。"
 
     # 處理稱呼邏輯
     clean_name = recipient_name.strip()
@@ -164,7 +168,7 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
     final_chi_ref = f"{chi_salutation}\n\n{chi_body}"
 
     # 顯示結果
-    st.success("🎉 雙語電郵範本生成成功（雙語已自動完成 AI 專業潤飾）！")
+    st.success("🎉 雙語電郵範本生成成功（雙語已完美對應轉換）！")
     
     st.subheader("📤 英文版 (右上角有一鍵 Copy 掣，同事可直接貼上)")
     st.code(final_email, language="text")

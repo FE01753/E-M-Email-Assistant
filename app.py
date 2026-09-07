@@ -4,7 +4,7 @@ from datetime import datetime
 st.set_page_config(page_title="AI 雙語工程電郵助手", page_icon="✉️", layout="centered")
 
 st.title("✉️ AI 雙語工程電郵助手 (E&M Assistant)")
-st.write("針對工程界設計：支援中英雙語對照、自選長短、Formal/Casual 語氣，並帶有 Nikki 專屬簽署！")
+st.write("針對工程界設計：支援中英雙語對照、一鍵快速複製英文電郵，並帶有 Nikki 專屬簽署！")
 
 st.divider()
 
@@ -138,8 +138,9 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
     # 顯示結果
     st.success("🎉 雙語電郵範本生成成功！")
     
-    st.subheader("📤 英文版 (可直接 Copy 寄出)")
-    st.text_area("English Output", value=final_email, height=220)
+    st.subheader("📤 英文版 (右上角備有一鍵 Copy 掣)")
+    # 用 st.code 取代普通 text_area，右上方會自動出現「📋 Copy」按鈕
+    st.code(final_email, language="text")
     
     st.subheader("🇨🇳 中文對照參考 (內部參閱)")
     st.text_area("Chinese Reference", value=final_chi_ref, height=180)

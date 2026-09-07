@@ -52,7 +52,7 @@ recipient_name = st.text_input(
 )
 
 other_party_content = st.text_area(
-    "貼上對方的 Email 內容或項目背景 (選填)：", 
+    "貼上對方的 Email 內容或項目背景 (僅作 AI 參考/唔會直接出現在信件內)：", 
     placeholder="例如：Could you please advise the replacement schedule for the valve."
 )
 
@@ -66,46 +66,36 @@ st.divider()
 # --- 3. 生成雙語電郵按鈕 ---
 if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
     
-    with st.spinner("AI 正在精準提取並進行專業商務潤飾中..."):
+    with st.spinner("AI 正在根據背景與核心訊息生成專業商務信件..."):
         bg_txt = other_party_content.strip()
         note_txt = raw_extra_notes.strip()
         is_formal = "Formal" in tone_style
         
-        # 簡單清洗對方背景（如果成段貼咗上落款，嘗試拎最核心嗰句或整潔顯示）
-        clean_bg = bg_txt.replace("\n", " ").strip()
-        if "Could you" in clean_bg or "please" in clean_bg.lower():
-            # 嘗試精簡顯示
-            pass
-
-        # --- 組合流暢嘅英文內文 ---
-        eng_sentences = []
-        if clean_bg:
-            eng_sentences.append(f"Regarding your inquiry ({clean_bg}),")
-        
-        if note_txt:
-            if "星" in note_txt or "星期" in note_txt or "周" in note_txt or "週" in note_txt or "月" in note_txt:
-                eng_sentences.append("please be advised that materials have been ordered, and site works are scheduled to commence in 4 weeks.")
+        # --- 根據電郵種類與核心訊息生成乾淨、專業的內文 ---
+        if "提交/發送工程進度表" in email_category:
+            if note_txt:
+                if "星" in note_txt or "星期" in note_txt or "周" in note_txt or "週" in note_txt or "月" in note_txt:
+                    eng_body_content = f"Please find attached our proposed work schedule. Please be advised that materials have been ordered, and site works are scheduled to commence in 4 weeks."
+                    chi_body_content = f"隨信附上建議嘅工程進度表。請注意相關物料經已訂購，並將於 4 星期後正式開工。"
+                else:
+                    eng_body_content = f"Please find our proposed work schedule attached. {note_txt}."
+                    chi_body_content = f"隨信附上建議嘅工程進度表。{note_txt}。"
             else:
-                eng_sentences.append(f"please be advised as follows: {note_txt}.")
-        else:
-            eng_sentences.append("please find our latest updates below.")
-            
-        eng_body_content = " ".join(eng_sentences)
-
-        # --- 組合流暢嘅中文內文 ---
-        chi_sentences = []
-        if clean_bg:
-            chi_sentences.append(f"關於您的查詢（{clean_bg}），")
+                eng_body_content = "Please find attached our proposed work schedule for your review and record."
+                chi_body_content = "隨信附上擬定之工程進度表供閣下審閱及備案。"
         
-        if note_txt:
-            if "星" in note_txt or "星期" in note_txt or "周" in note_txt or "週" in note_txt or "月" in note_txt:
-                chi_sentences.append("請注意相關物料經已訂購，並將於 4 星期後正式開工。")
-            else:
-                chi_sentences.append(f"現作以下補充：{note_txt}。")
-        else:
-            chi_sentences.append("現提供相關專案更新如下。")
+        elif "技術澄清" in email_category:
+            eng_body_content = f"Regarding your inquiry, please be advised as follows: {note_txt if note_txt else 'All works and specifications comply with relevant E&M standards.'}"
+            chi_body_content = f"關於您的查詢，現作以下回覆：{note_txt if note_txt else '所有工程及規格均符合相關機電標準。'}"
             
-        chi_body_content = "".join(chi_sentences)
+        else:
+            # 預設通用專業正文
+            if note_txt:
+                eng_body_content = f"Regarding the project requirements, please be advised that {note_txt}."
+                chi_body_content = f"關於項目要求，現補充如下：{note_txt}。"
+            else:
+                eng_body_content = "Please find our latest project update attached for your review."
+                chi_body_content = "隨信附上最新的專案進度更新供閣下審閱。"
 
     # 處理稱呼邏輯
     clean_name = recipient_name.strip()
@@ -120,10 +110,10 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
         eng_salutation = "Hi Team,"
         chi_salutation = "Hi 各位同事："
 
-    # 組裝最終收尾
+    # 組裝收尾
     if is_formal:
-        eng_final_body = f"{eng_body_content}\n\nOur team has carefully reviewed all requirements to ensure full compliance with technical and safety standards. Should you require any further details, please feel free to contact us."
-        chi_final_body = f"{chi_body_content}\n\n我們已仔細審視所有要求，以確保完全符合技術及安全標準。如需進一步詳情，請隨時與我們聯絡。"
+        eng_final_body = f"{eng_body_content}\n\nOur team has carefully reviewed all technical and safety standards to ensure smooth execution. Should you have any questions, please feel free to contact us."
+        chi_final_body = f"{chi_body_content}\n\n我們已仔細審視所有技術及安全標準以確保順利執行。如閣下有任何疑問，請隨時與我們聯絡。"
     else:
         eng_final_body = f"{eng_body_content}\n\nLet me know if you have any questions!"
         chi_final_body = f"{chi_body_content}\n\n如果有任何問題隨時話我知！"

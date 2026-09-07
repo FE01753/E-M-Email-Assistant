@@ -72,10 +72,10 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
             eng_polished = ""
             chi_polished = ""
         else:
-            # 針對「提交 Schedule」類別嘅智能轉化
+            # 針對「提交 Schedule」類別或其他口語的智能轉化
             if "星" in txt or "星期" in txt or "周" in txt or "週" in txt or "月" in txt:
-                eng_polished = f"Please find our proposed work schedule attached. {txt} (Materials have been ordered, and site works are arranged accordingly)."
-                chi_polished = f"請參閱隨附之擬定工程進度表。{txt}（相關物料經已訂購，並已妥善安排現場工序）。"
+                eng_polished = f"Please note that materials have been ordered, and site works are scheduled to commence in 4 weeks as outlined in the schedule."
+                chi_polished = f"請注意，相關物料經已訂購，並如進度表所示，工程將於 4 星期後正式開工。"
             elif "五" in txt or "星期五" in txt or "fri" in txt.lower():
                 eng_polished = "We confirm that site mobilization and commencement of works are scheduled for this coming Friday, and all relevant resources have been secured."
                 chi_polished = "我們確認地盤動員及開工工程定於本週五進行，所有相關資源已準備就緒。"

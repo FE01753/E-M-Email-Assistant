@@ -32,7 +32,7 @@ with col2:
             "工程延誤解釋與方案 / Delay Explanation & Solution",
             "文件/圖則審批回覆 / Proposal Submission Reply",
             "夾位/現場協調通知 / Site Coordination Notice",
-            "簡單回覆對方開工 Schedule / Brief Reply on Work Schedule"
+            "提交/發送工程進度表 / Submitting Work Schedule"
         ]
     )
     length_style = st.selectbox(
@@ -56,10 +56,9 @@ other_party_content = st.text_area(
     placeholder="例如：關於 Regent Hotel 3/F 項目嘅電氣及冷氣改動工程報價..."
 )
 
-# 補返「你想強調嘅核心訊息」輸入框
 raw_extra_notes = st.text_area(
     "你想強調嘅核心訊息 (隨便打口語或粗略重點，生成時會自動轉化為專業商務語氣)：", 
-    placeholder="例如：確認本週五進場，會夾埋冷氣組去馬"
+    placeholder="例如：已訂貨，4星期後開工"
 )
 
 st.divider()
@@ -73,8 +72,11 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
             eng_polished = ""
             chi_polished = ""
         else:
-            # 關鍵字智能對應中英文專業版本，避免夾雜英文
-            if "五" in txt or "星期五" in txt or "fri" in txt.lower():
+            # 針對「提交 Schedule」類別嘅智能轉化
+            if "星" in txt or "星期" in txt or "周" in txt or "週" in txt or "月" in txt:
+                eng_polished = f"Please find our proposed work schedule attached. {txt} (Materials have been ordered, and site works are arranged accordingly)."
+                chi_polished = f"請參閱隨附之擬定工程進度表。{txt}（相關物料經已訂購，並已妥善安排現場工序）。"
+            elif "五" in txt or "星期五" in txt or "fri" in txt.lower():
                 eng_polished = "We confirm that site mobilization and commencement of works are scheduled for this coming Friday, and all relevant resources have been secured."
                 chi_polished = "我們確認地盤動員及開工工程定於本週五進行，所有相關資源已準備就緒。"
             elif "有效" in txt or "30" in txt:
@@ -87,8 +89,8 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
                 eng_polished = "Please refer to the updated layout and draft drawings attached, which fully comply with current site requirements and safety standards."
                 chi_polished = "請參閱隨附之更新佈局及草圖，其完全符合現行現場要求及安全標準。"
             else:
-                eng_polished = f"Please be advised regarding the above arrangements, ensuring full compliance with site requirements and smooth progress."
-                chi_polished = f"請留意上述安排，以確保完全符合現場要求及工程順利進行。"
+                eng_polished = f"Please be advised regarding the above schedule and arrangements: {txt}, ensuring full compliance with site requirements."
+                chi_polished = f"請留意上述進度及相關安排：{txt}，以確保完全符合現場要求。"
 
     # 處理稱呼邏輯
     clean_name = recipient_name.strip()
@@ -155,14 +157,14 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
         eng_body = f"""To ensure smooth coordination among different trades, we would like to arrange a site coordination session.\n\n• Focus Area: {eng_polished if eng_polished else 'Main routing and service zones'}\n• Objective: To prevent clash issues prior to installation."""
         chi_body = f"""為確保各工種順利協調，擬安排現場夾位工作。\n\n• 重點區域：{chi_polished if chi_polished else '主要喉管路線及服務區'}\n• 目的：在安裝前避免碰撞問題。"""
 
-    # --- 類別 7：簡單回覆對方開工 Schedule ---
+    # --- 類別 7：提交/發送工程進度表 (Submitting Work Schedule) ---
     else:
         if is_formal:
-            eng_body = f"""Thank you for sharing the work schedule. We have reviewed the proposed timeline and confirm our alignment with the key milestones.\n\n{eng_polished if eng_polished else 'Our team will prepare the necessary site resources and coordinate accordingly.'}"""
-            chi_body = f"""感謝提供開工進度時間表。我們已審閱擬定的時間軸，並確認配合各項主要里程碑。\n\n{chi_polished if chi_polished else '我們團隊將準備好相應的現場資源並作出配合。'}"""
+            eng_body = f"""Please find attached our tentative work schedule for your review and record.\n\n{eng_polished if eng_polished else 'Our team has planned the sequence of works to ensure minimal disruption and smooth progress.'}\n\nShould you have any comments or require minor adjustments, please feel free to let us know."""
+            chi_body = f"""隨信附上擬定之工程進度表供閣下審閱及備案。\n\n{chi_polished if chi_polished else '我們已妥善規劃施工次序，以確保對周邊影響減到最低並順利推進。'}\n\n如閣下有任何意見或需微調，請隨時通知我們。"""
         else:
-            eng_body = f"""Thanks for sharing the schedule! We've checked the timeline and everything looks good on our end.\n\n{eng_polished if eng_polished else 'We will get our crew and materials ready accordingly.'}"""
-            chi_body = f"""多謝提供 Schedule！我們睇過時間表冇問題，會按時準備好人手同物料。\n\n{chi_polished if chi_polished else ''}"""
+            eng_body = f"""Please find our proposed work schedule attached.\n\n{eng_polished if eng_polished else 'We have arranged the timeline accordingly.'}\n\nLet me know if you have any feedback!"""
+            chi_body = f"""隨信附上建議嘅工程進度表。\n\n{chi_polished if chi_polished else '時間表已經安排好。'}\n\n如果有任何意見隨時話我知！"""
 
     # 乾淨正文（無下款）
     final_email = f"{eng_salutation}\n\n{eng_body}"

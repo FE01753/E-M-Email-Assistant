@@ -4,7 +4,7 @@ from datetime import datetime
 st.set_page_config(page_title="AI 雙語工程電郵助手", page_icon="✉️", layout="centered")
 
 st.title("✉️ AI 雙語工程電郵助手 (E&M Assistant)")
-st.write("針對工程界設計：支援中英雙語對照、自選長短、Formal/Casual 語氣，並自動帶有 Nikki 專屬簽署！")
+st.write("針對工程界設計：支援中英雙語對照、自選長短、Formal/Casual 語氣，並帶有 Nikki 專屬簽署！")
 
 st.divider()
 
@@ -25,6 +25,7 @@ with col2:
     email_category = st.selectbox(
         "電郵種類 (Template Type)", 
         [
+            "發送正式 Quotation 畀對方 / Sending Official Quotation",
             "回覆報價邀請 / Quotation Invitation Response",
             "報價跟進 / Quotation Follow-up",
             "技術澄清 / Technical Clarification",
@@ -50,11 +51,11 @@ recipient_name = st.text_input(
 )
 
 other_party_content = st.text_area(
-    "貼上對方的 Email 內容 (選填)：", 
-    placeholder="例如：收到裝修單位發黎嘅 Quotation Invitation，要求就 Regent Hotel 3/F 進行 EL 系統改動報價..."
+    "貼上對方的 Email 內容或項目背景 (選填)：", 
+    placeholder="例如：關於 Regent Hotel 3/F 項目嘅電氣及冷氣改動工程報價..."
 )
 
-extra_notes = st.text_input("你想強調嘅核心訊息 (例如：預計三日內交到 / 需先夾位)", placeholder="例如：將於本週五前提交正式 Quotation")
+extra_notes = st.text_input("你想強調嘅核心訊息 (例如：有效期 30 日 / 包現場量度)", placeholder="例如：報價有效期為 30 天，已包現場尺寸核實")
 
 st.divider()
 
@@ -79,8 +80,17 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
     eng_body = ""
     chi_body = "" 
     
+    # --- 類別 0：發送正式 Quotation (Sending Official Quotation) ---
+    if "發送正式 Quotation" in email_category:
+        if is_formal:
+            eng_body = f"""Please find attached our official quotation for your review and consideration.\n\nOur team has carefully evaluated the site conditions, scope of works, and relevant technical requirements. {extra_notes if extra_notes else 'All proposed items comply with statutory standards and site safety guidelines.'}\n\nShould you have any questions or require further clarification regarding the pricing or details, please feel free to contact us.\n\nWe look forward to the opportunity of working with you on this project."""
+            chi_body = f"""隨信附上正式報價單供閣下審閱及考慮。\n\n我們已仔細評估現場情況、工程範圍及相關技術要求。{extra_notes if extra_notes else '所有建議項目均符合法定標準及地盤安全指引。'}\n\n如對價格或細節有任何疑問或需進一步澄清，請隨時與我們聯絡。\n\n期待有機會在此項目中與閣下合作。"""
+        else:
+            eng_body = f"""Please find our official quotation attached.\n\n{extra_notes if extra_notes else 'We have factored in all the site requirements and scope discussed.'}\n\nLet me know if you have any questions or want to go over the details. Looking forward to your feedback!"""
+            chi_body = f"""隨信附上正式報價單。\n\n{extra_notes if extra_notes else '我們已計及所有討論過嘅現場要求同工程範圍。'}\n\n如果有任何問題或想對對細節隨時話我知，期待閣下回覆！"""
+
     # --- 類別 1：回覆報價邀請 (Quotation Invitation Response) ---
-    if "回覆報價邀請" in email_category:
+    elif "回覆報價邀請" in email_category:
         if is_formal:
             eng_body = f"""Thank you for your kind invitation to submit a quotation.\n\nWe acknowledge receipt of your request regarding the project requirements. Our team is currently reviewing the site details and scope of works (including FFL verification and relevant safety standards).\n\n{extra_notes if extra_notes else 'We will finalize and submit our formal quotation shortly.'}\n\nShould you require any preliminary site visit or coordination in the meantime, please feel free to let us know."""
             chi_body = f"""感謝閣下邀請我們提交報價。\n\n我們已收到關於項目要求的查詢。團隊正審視現場細節及工程範圍（包括 FFL 驗證及相關安全標準）。\n\n{extra_notes if extra_notes else '我們將盡快完成並提交正式報價單。'}\n\n如在此期間需要任何初步現場視察或協調，請隨時通知我們。"""

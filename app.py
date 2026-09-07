@@ -63,46 +63,49 @@ raw_extra_notes = st.text_area(
 
 st.divider()
 
-# --- 3. 生成雙語電郵按鈕 (真正讀取並結合對方背景與補充) ---
+# --- 3. 生成雙語電郵按鈕 ---
 if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
     
-    with st.spinner("AI 正在深度解析對方背景與您的核心訊息中..."):
+    with st.spinner("AI 正在精準提取並進行專業商務潤飾中..."):
         bg_txt = other_party_content.strip()
         note_txt = raw_extra_notes.strip()
         is_formal = "Formal" in tone_style
         
-        # --- 動態整合英文內容 ---
-        eng_intro_parts = []
-        if bg_txt:
-            eng_intro_parts.append(f"Regarding your inquiry ({bg_txt}),")
-        
-        if note_txt:
-            # 針對常見口語進行智能專業轉換
-            if "星" in note_txt or "星期" in note_txt or "周" in note_txt or "週" in note_txt or "月" in note_txt:
-                eng_intro_parts.append(f"please be advised that materials have been ordered, and site works are scheduled to commence in 4 weeks.")
-            else:
-                eng_intro_parts.append(f"please be advised as follows: {note_txt}.")
-        
-        if not eng_intro_parts:
-            eng_body_content = "Please find our project updates attached for your review and record."
-        else:
-            eng_body_content = " ".join(eng_intro_parts)
+        # 簡單清洗對方背景（如果成段貼咗上落款，嘗試拎最核心嗰句或整潔顯示）
+        clean_bg = bg_txt.replace("\n", " ").strip()
+        if "Could you" in clean_bg or "please" in clean_bg.lower():
+            # 嘗試精簡顯示
+            pass
 
-        # --- 動態整合中文內容 ---
-        chi_intro_parts = []
-        if bg_txt:
-            chi_intro_parts.append(f"關於您的查詢（{bg_txt}），")
+        # --- 組合流暢嘅英文內文 ---
+        eng_sentences = []
+        if clean_bg:
+            eng_sentences.append(f"Regarding your inquiry ({clean_bg}),")
         
         if note_txt:
             if "星" in note_txt or "星期" in note_txt or "周" in note_txt or "週" in note_txt or "月" in note_txt:
-                chi_intro_parts.append(f"請注意相關物料經已訂購，並將於 4 星期後正式開工。")
+                eng_sentences.append("please be advised that materials have been ordered, and site works are scheduled to commence in 4 weeks.")
             else:
-                chi_intro_parts.append(f"現作以下補充：{note_txt}。")
-        
-        if not chi_intro_parts:
-            chi_body_content = "隨信附上相關專案進度供閣下審閱及備案。"
+                eng_sentences.append(f"please be advised as follows: {note_txt}.")
         else:
-            chi_body_content = "".join(chi_intro_parts)
+            eng_sentences.append("please find our latest updates below.")
+            
+        eng_body_content = " ".join(eng_sentences)
+
+        # --- 組合流暢嘅中文內文 ---
+        chi_sentences = []
+        if clean_bg:
+            chi_sentences.append(f"關於您的查詢（{clean_bg}），")
+        
+        if note_txt:
+            if "星" in note_txt or "星期" in note_txt or "周" in note_txt or "週" in note_txt or "月" in note_txt:
+                chi_sentences.append("請注意相關物料經已訂購，並將於 4 星期後正式開工。")
+            else:
+                chi_sentences.append(f"現作以下補充：{note_txt}。")
+        else:
+            chi_sentences.append("現提供相關專案更新如下。")
+            
+        chi_body_content = "".join(chi_sentences)
 
     # 處理稱呼邏輯
     clean_name = recipient_name.strip()
@@ -117,7 +120,7 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
         eng_salutation = "Hi Team,"
         chi_salutation = "Hi 各位同事："
 
-    # 組裝最終電郵結構
+    # 組裝最終收尾
     if is_formal:
         eng_final_body = f"{eng_body_content}\n\nOur team has carefully reviewed all requirements to ensure full compliance with technical and safety standards. Should you require any further details, please feel free to contact us."
         chi_final_body = f"{chi_body_content}\n\n我們已仔細審視所有要求，以確保完全符合技術及安全標準。如需進一步詳情，請隨時與我們聯絡。"

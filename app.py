@@ -4,7 +4,7 @@ from datetime import datetime
 st.set_page_config(page_title="AI 雙語工程電郵助手", page_icon="✉️", layout="centered")
 
 st.title("✉️ AI 雙語工程電郵助手 (E&M Assistant)")
-st.write("針對工程界設計：支援中英雙語對照、一鍵快速複製（不含署名，方便同事直接使用）！")
+st.write("針對工程界設計：支援中英雙語對照、一鍵快速複製，並自動附帶 Nikki 專屬簽署！")
 
 st.divider()
 
@@ -127,14 +127,19 @@ if st.button("✨ 一鍵生成雙語電郵範本", type="primary"):
         eng_body = f"""To ensure smooth coordination among different trades, we would like to arrange a site coordination session.\n\n• Focus Area: {extra_notes if extra_notes else 'Main routing and service zones'}\n• Objective: To prevent clash issues prior to installation.\n\nPlease let us know your preferred date and time."""
         chi_body = f"""為確保各工種順利協調，擬安排現場夾位工作。\n\n• 重點區域：{extra_notes if extra_notes else '主要喉管路線及服務區'}\n• 目的：在安裝前避免碰撞問題。\n\n請話我知閣下方便嘅日期同時間。"""
 
-    # **完全不帶下款，直接組合正文**
-    final_email = f"{eng_salutation}\n\n{eng_body}"
+    # Nikki 專屬簽署水印
+    eng_signoff = "Best regards,\nNikki\nE&M Maintenance Section"
+    if is_formal and "業主" in recipient_type:
+        eng_signoff = "Yours faithfully,\nNikki\nEngineering Department"
+
+    # 組合完整英文電郵（連 Nikki 水印）
+    final_email = f"{eng_salutation}\n\n{eng_body}\n\n{eng_signoff}"
     final_chi_ref = f"{chi_salutation}\n\n{chi_body}"
 
     # 顯示結果
-    st.success("🎉 雙語電郵範本生成成功（無下款版本）！")
+    st.success("🎉 雙語電郵範本生成成功（連 Nikki 專屬署名）！")
     
-    st.subheader("📤 英文版 (右上角有一鍵 Copy 掣，同事可直接貼上)")
+    st.subheader("📤 英文版 (右上角有一鍵 Copy 掣，附帶 Nikki 水印)")
     st.code(final_email, language="text")
     
     st.subheader("🇨🇳 中文對照參考 (內部參閱)")

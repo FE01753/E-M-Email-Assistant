@@ -1,9 +1,7 @@
 import streamlit as st
-from docx import Document
-from docx.shared import Inches, Pt, RGBColor
-import io
 from datetime import datetime
 from PIL import Image
+import io
 
 st.title("📸 Sleek-Industrial 進度記錄器")
 
@@ -36,10 +34,10 @@ if st.button("➕ 新增到今日清單"):
             if img.mode in ('RGBA', 'LA', 'P'):
                 img = img.convert('RGB')
             
+            # 暫存縮圖用以預覽
             photo_bytes = io.BytesIO()
             img.save(photo_bytes, format='JPEG', quality=90)
             photo_bytes.seek(0)
-            photo_bytes.name = "photo.jpg"
             
             f_val = floor.strip() if floor else ""
             r_val = room.strip() if room else ""
@@ -53,7 +51,7 @@ if st.button("➕ 新增到今日清單"):
             })
             st.success("成功新增現場記錄！")
         except Exception as e:
-            st.error(f"相片處理失敗，請嘗試另一張相片。錯誤詳情: {e}")
+            st.error(f"相片處理失敗: {e}")
     else:
         st.warning("請上傳或拍攝現場相片！")
 
@@ -71,7 +69,6 @@ if len(st.session_state['records']) > 0:
         with st.expander(f"項目 #{i+1}: {loc_str} ({rec['category']})"):
             st.write(f"備忘：{rec['remarks']}")
             
-            # 預覽相片前先重置指標
             rec['photo'].seek(0)
             st.image(rec['photo'], width=300)
             
@@ -87,61 +84,36 @@ else:
 
 st.divider()
 
-# --- 3. 最後一鍵生成 REPORT ---
-st.subheader("3️⃣ 匯出報告")
-if st.button("📥 一鍵生成 Word 報告"):
+# --- 3. 一鍵生成文字報告並提供複製 ---
+st.subheader("3️⃣ 生成報告並複製")
+
+if st.button("📋 生成文字報告"):
     if len(st.session_state['records']) == 0:
-        st.warning("請先新增至少一個記錄先可以出 Report！")
+        st.warning("請先新增至少一個記錄先可以生成報告！")
     else:
-        doc = Document()
-        
-        # --- 新增：設定頁尾水印 / 公司標誌 (Footer Watermark) ---
-        section = doc.sections[0]
-        footer = section.footer
-        footer_p = footer.paragraphs[0]
-        footer_p.text = "E&M Maintenance Section | Sleek-Industrial Official Report - Confidential"
-        footer_p.alignment = docx.enum.text.WD_ALIGN_PARAGRAPH.RIGHT
-        # 設定頁尾字體大小與顏色
-        for run in footer_p.runs:
-            run.font.size = Pt(8.5)
-            run.font.color.rgb = RGBColor(128, 128, 128)
-        
-        # --- 報告內容主體 ---
-        doc.add_heading(f"工程進度巡檢報告", 0)
         display_title = job_title if job_title.strip() != "" else "Unnamed Project"
-        doc.add_paragraph(f"Job Title: {display_title}")
-        doc.add_paragraph(f"生成日期：{datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        doc.add_paragraph(f"總記錄項目數：{len(st.session_state['records'])} 項\n")
-        doc.add_paragraph("-" * 40)
+        
+        report_lines = []
+        report_lines.append(f"【工程進度巡檢報告】")
+        report_lines.append(f"Job Title: {display_title}")
+        report_lines.append(f"生成日期：{datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        report_lines.append(f"總記錄項目數：{len(st.session_state['records'])} 項")
+        report_lines.append("-" * 30)
         
         for i, rec in enumerate(st.session_state['records']):
             loc_parts = []
             if rec['floor']: loc_parts.append(f"樓層 {rec['floor']}")
             if rec['room']: loc_parts.append(f"區域 {rec['room']}")
-            loc_title = f"項目 {i+1}: " + (" - ".join(loc_parts) if loc_parts else "未註明位置")
+            loc_str = " - ".join(loc_parts) if loc_parts else "未註明位置"
             
-            doc.add_heading(loc_title, level=2)
-            doc.add_paragraph(f"• 工程類別：{rec['category']}")
-            doc.add_paragraph(f"• 工作備忘：{rec['remarks']}")
+            report_lines.append(f"\n項目 {i+1}: {loc_str}")
+            report_lines.append(f"• 工程類別：{rec['category']}")
+            report_lines.append(f"• 工作備忘：{rec['remarks']}")
+            report_lines.append("-" * 20)
             
-            try:
-                # 插入 Word 前將指標歸零
-                rec['photo'].seek(0)
-                doc.add_picture(rec['photo'], width=Inches(4.5))
-            except Exception as e:
-                doc.add_paragraph("[相片載入失敗]")
-            
-            doc.add_paragraph("-" * 30)
-            
-        buffer = io.BytesIO()
-        doc.save(buffer)
-        buffer.seek(0)
+        report_lines.append("\n[E&M Maintenance Section | Confidential]")
         
-        safe_job_title = "".join(c for c in display_title if c.isalnum() or c in (' ', '_', '-')).strip().replace(' ', '_')
+        full_report_text = "\n".join(report_lines)
         
-        st.download_button(
-            label="💾 點擊下載 Word 報告 (.docx)",
-            data=buffer,
-            file_name=f"Report_{safe_job_title}_{datetime.now().strftime('%Y%m%d_%H%M')}.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
+        st.success("🎉 文字報告已生成！你可以直接在下方框框內一鍵複製：")
+        st.text_area("Report Text (可以直接 Copy)", value=full_report_text, height=250)

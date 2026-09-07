@@ -3,6 +3,25 @@ from datetime import datetime
 
 st.set_page_config(page_title="AI 雙語工程電郵助手", page_icon="✉️", layout="centered")
 
+# --- 自訂 CSS 樣式：設定 Aptos 字體與 12pt 字號 ---
+st.markdown(
+    """
+    <style>
+    /* 針對英文版代碼框 (st.code) 設定 Aptos、12pt */
+    .stCodeBlock code, .stCodeBlock pre {
+        font-family: 'Aptos', sans-serif !important;
+        font-size: 12pt !important;
+    }
+    /* 針對中文參考文字框 (st.text_area) 設定 Aptos、12pt */
+    .stTextArea textarea {
+        font-family: 'Aptos', sans-serif !important;
+        font-size: 12pt !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.title("✉️ AI 雙語工程電郵助手 (E&M Assistant)")
 st.write("針對工程界設計：支援中英雙語對照、自動 AI 專業潤飾、一鍵快速複製英文電郵！")
 
